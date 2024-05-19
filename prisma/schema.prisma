@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @unique @default(uuid())
+  name     String
+  verified String
+  email    String  @unique
+  password String
+  store    Store[]
+
+  @@index([id])
+}
+
+model Store {
+  id         String    @unique @default(uuid())
+  userId     String
+  location   String
+  logo       String
+  name       String
+  categories String[]
+  products   product[]
+  // we have to add a custom categories 
+  user       User?     @relation(fields: [userId], references: [id])
+
+  @@index([id])
+  @@index([userId])
+}
+
+model product {
+  id      String   @unique @default(uuid())
+  storeId String
+  type    String
+  color   String[]
+  store   Store?   @relation(fields: [storeId], references: [id])
+
+  @@index([id])
+  @@index([storeId])
+}

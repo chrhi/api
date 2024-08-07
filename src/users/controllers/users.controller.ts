@@ -1,12 +1,24 @@
 import { Controller, Get } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 
-@Controller('user')
+@Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  getUser(): string {
+  getUserById(): string {
+    return this.usersService.getUserById();
+  }
+
+  getAllUsers(): string {
+    return this.usersService.getUserById();
+  }
+
+  createUser(): string {
+    return this.usersService.getUserById();
+  }
+
+  deleteUser(): string {
     return this.usersService.getUserById();
   }
 }

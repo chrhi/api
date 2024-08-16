@@ -8,4 +8,6 @@ export class UsersService {
   getUserById(): string {
     return 'This is user by id!';
   }
+
+  createUser() {}
 }

@@ -9,12 +9,13 @@ datasource db {
 
 model User {
   id       String  @unique @default(uuid())
-  name     String
-  verified String
+  fname    String
+  lname    String
+  verified Boolean
+  phone    Int     @unique
   email    String  @unique
   password String
   store    Store[]
-
   @@index([id])
 }
 
@@ -25,7 +26,7 @@ model Store {
   logo       String
   name       String
   categories String[]
-  products   product[]
+  products   Product[]
   // we have to add a custom categories 
   user       User?     @relation(fields: [userId], references: [id])
 
@@ -33,7 +34,7 @@ model Store {
   @@index([userId])
 }
 
-model product {
+model Product {
   id      String   @unique @default(uuid())
   storeId String
   type    String

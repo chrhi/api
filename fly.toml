@@ -1,10 +1,11 @@
-# fly.toml app configuration file generated for jethings-api on 2024-10-08T17:30:01Z
+# fly.toml app configuration file generated for jethings-api-snowy-cloud-2943 on 2024-10-08T19:59:58+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'jethings-api'
 primary_region = 'mad'
+org = 'Jethings'
 
 [build]
 
@@ -12,7 +13,7 @@ primary_region = 'mad'
   PORT = '8080'
 
 [http_service]
-  internal_port = 8080
+  internal_port = 3000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

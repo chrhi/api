@@ -6,46 +6,54 @@ FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="NodeJS/Prisma"
 
-# NodeJS/Prisma app lives here
+# Set the working directory inside the container
 WORKDIR /app
 
 # Set production environment
 ENV NODE_ENV=production
 
+# Install pnpm
+RUN npm install -g pnpm
 
-# Throw-away build stage to reduce size of final image
+# Throw-away build stage to reduce the size of the final image
 FROM base as build
 
 # Install packages needed to build node modules
 RUN apt-get update -qq && \
-    apt-get install -y python-is-python3 pkg-config build-essential openssl 
+    apt-get install -y python-is-python3 pkg-config build-essential openssl
 
-# Install node modules
-COPY --link package.json .
-RUN npm install --production=false
+# Install dependencies using pnpm
+COPY --link pnpm-lock.yaml ./
+COPY --link package.json ./
+RUN pnpm install --frozen-lockfile
 
 # Generate Prisma Client
-COPY --link prisma .
+COPY --link prisma ./prisma
 RUN npx prisma generate
 
 # Copy application code
 COPY --link . .
 
-# Build application
-RUN npm run build
+# Build the application
+RUN pnpm run build
 
-# Remove development dependencies
-RUN npm prune --production
+# Prune dev dependencies
+RUN pnpm prune --prod
 
-
-# Final stage for app image
+# Final stage for production app image
 FROM base
 
-# Copy built application
+# Copy built application and production node modules from build stage
 COPY --from=build /app /app
 
-# Entrypoint prepares the database.
+# Ensure ENV variables are used properly (e.g., database connection)
+ENV DATABASE_URL=${DATABASE_URL}
+
+# Make sure the entrypoint script is executable
+RUN chmod +x /app/docker-entrypoint
+
+# Entrypoint prepares the database
 ENTRYPOINT ["/app/docker-entrypoint"]
 
-# Start the server by default, this can be overwritten at runtime
-CMD [ "npm", "run", "start" ]
+# Start the server by default; this can be overwritten at runtime
+CMD ["pnpm", "start"]

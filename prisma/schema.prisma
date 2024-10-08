@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id       String  @unique @default(uuid())
+  id       String  @unique @default(cuid())
   fname    String
   lname    String
   verified Boolean
@@ -16,18 +16,31 @@ model User {
   email    String  @unique
   password String
   store    Store[]
+  verificationCode VerificationCode[]
+  @@index([id])
+}
+
+enum CodeTypes {
+  RESET_PASSWORD 
+  CONFIRM_EMAIL 
+}
+
+model VerificationCode {
+   id       String  @unique @default(cuid())
+   userId   String
+   type     CodeTypes 
+   user     User?     @relation(fields: [userId], references: [id])
   @@index([id])
 }
 
 model Store {
-  id         String    @unique @default(uuid())
+  id         String    @unique @default(cuid())
   userId     String
   location   String
   logo       String
   name       String
   categories String[]
   products   Product[]
-  // we have to add a custom categories 
   user       User?     @relation(fields: [userId], references: [id])
 
   @@index([id])
@@ -35,7 +48,7 @@ model Store {
 }
 
 model Product {
-  id      String   @unique @default(uuid())
+  id      String   @unique @default(cuid())
   storeId String
   type    String
   color   String[]

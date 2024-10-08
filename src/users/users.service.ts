@@ -6,6 +6,7 @@ import {
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from 'src/email/email.service';
 
 type TUser = {
   fname: string;
@@ -17,7 +18,10 @@ type TUser = {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async findUserById({ id }: { id: string }): Promise<User> {
     try {
@@ -60,6 +64,8 @@ export class UsersService {
           phone: Number(user?.phone),
         },
       });
+
+      // this.emailService.sendVerificationCode()
 
       return dbUser;
     } catch (err) {

@@ -58,7 +58,7 @@ export class UsersController {
       phone: number;
     },
   ): Promise<User> {
-    console.log(input);
+ 
     try {
       const user = await this.usersService.createUser({
         email: input.email,

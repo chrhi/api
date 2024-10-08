@@ -12,19 +12,19 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Install pnpm
+# Install pnpm globally
 RUN npm install -g pnpm
 
 # Throw-away build stage to reduce the size of the final image
-FROM base as build
+FROM base AS build
 
 # Install packages needed to build node modules
 RUN apt-get update -qq && \
     apt-get install -y python-is-python3 pkg-config build-essential openssl
 
 # Install dependencies using pnpm
-COPY --link pnpm-lock.yaml ./
-COPY --link package.json ./
+COPY --link pnpm-lock.yaml ./ 
+COPY --link package.json ./ 
 RUN pnpm install --frozen-lockfile
 
 # Generate Prisma Client
@@ -45,9 +45,6 @@ FROM base
 
 # Copy built application and production node modules from build stage
 COPY --from=build /app /app
-
-# Ensure ENV variables are used properly (e.g., database connection)
-ENV DATABASE_URL=${DATABASE_URL}
 
 # Make sure the entrypoint script is executable
 RUN chmod +x /app/docker-entrypoint

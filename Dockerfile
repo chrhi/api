@@ -15,6 +15,8 @@ ENV NODE_ENV=production
 # Install pnpm globally
 RUN npm install -g pnpm
 
+RUN npm install -g @nestjs/cli
+
 # Throw-away build stage to reduce the size of the final image
 FROM base AS build
 

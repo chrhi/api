@@ -1,36 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './guards/auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-  @HttpCode(HttpStatus.OK)
+  constructor(private authService: AuthService) {}
+
+  // i think this one validates the user and append the request to add the user objct
+  @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Body() input: { email: string; password: string }) {
-    const data = await this.authService.authanticate({
-      password: input.password,
-      email: input.email,
-    });
-
-    console.log('this is the data returned from the auth service', data);
-    return data;
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('/user-info')
-  async getUserInfo(@Request() request) {
-    const user = await this.authService.getUserById(request.user.userId);
-
-    return user;
+  async login(@Request() req) {
+    return this.authService.login(req.user);
   }
 }

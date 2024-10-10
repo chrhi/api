@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
@@ -19,63 +14,64 @@ type TUser = {
 export class UsersService {
   constructor(
     private prisma: PrismaService,
-    private emailService: EmailService,
+    private resend: EmailService,
   ) {}
 
-  async findUserById({ id }: { id: string }): Promise<User> {
-    try {
-      const user = await this.prisma.user.findFirst({
-        where: {
-          id,
-        },
-      });
-
-      return user;
-    } catch (err) {
-      throw new NotFoundException();
-    }
-  }
-  async findUserByEmail({ email }: { email: string }): Promise<User> {
-    try {
-      const user = await this.prisma.user.findFirst({
-        where: {
-          email,
-        },
-      });
-
-      return user;
-    } catch (err) {
-      throw new NotFoundException();
-    }
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async createUser(user: TUser) {
-    const saltOrRounds = 10;
+  async generateConfirmationCode(userId: string, userEmail: string) {
+    const verificationCode = await this.prisma.verificationCode.create({
+      data: {
+        code: 'RAYAN_IS_ANGRY',
+        type: 'CONFIRM_EMAIL',
+        userId,
+        isActive: true,
+      },
+    });
 
-    try {
-      const hash = await bcrypt.hash(user?.password, saltOrRounds);
-      const dbUser = await this.prisma.user.create({
-        data: {
-          ...user,
-          verified: false,
-          password: hash,
-          lname: 'later',
-          phone: Number(user?.phone),
-        },
-      });
-
-      // this.emailService.sendVerificationCode()
-
-      return dbUser;
-    } catch (err) {
-      console.error(err);
-      throw new InternalServerErrorException();
-    }
+    this.resend.sendVerificationCode(userEmail, verificationCode.id);
   }
 
-  async getAllUsers() {
-    const users = await this.prisma.user.findMany();
+  async confirmeUserAccount(userId: string) {
+    const code = await this.prisma.verificationCode.findFirst({
+      where: {
+        userId,
+      },
+    });
 
-    return users;
+    if (!code.isActive) {
+      return 'user already activated';
+    }
+
+    const user = this.prisma.user.update({
+      where: {
+        id: code.userId,
+      },
+      data: {
+        verified: true,
+      },
+    });
+
+    return user;
+  }
+
+  async create(userData: TUser) {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email: userData.email,
+        fname: userData.fname,
+        lname: 'later',
+        phone: Number(userData.phone),
+        password: hashedPassword,
+        verified: false,
+      },
+    });
+
+    await this.generateConfirmationCode(user.id, user.email);
+
+    return user;
   }
 }

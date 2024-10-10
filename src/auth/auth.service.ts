@@ -1,64 +1,31 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { AuthInput, AuthResult, SignInData } from './utils/types';
-import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { AuthJwtPayload } from './types/auth-jwtPayload';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UsersService,
+    private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
-  async validateUser(input: AuthInput): Promise<User | null> {
-    const user = await this.userService.findUserByEmail({ email: input.email });
-
-    if (!user) {
-      return null;
+  // i am not sure when this function is going to be called
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findByEmail(email);
+    if (user && (await bcrypt.compare(password, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      return result;
     }
-
-    const isValid = await bcrypt.compare(input.password, user.password);
-
-    if (!isValid) {
-      return null;
-    }
-    return user;
+    return null;
   }
 
-  async signIn(user: SignInData): Promise<AuthResult> {
-    const tokenPayload = {
-      sub: user.userId,
-      email: user.email,
+  // this resposible for create the signed token
+  async login(user: any) {
+    const payload: AuthJwtPayload = { email: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
     };
-
-    const accessToken = await this.jwtService.signAsync(tokenPayload);
-    return { accessToken, userId: user.userId, email: user.email };
-  }
-
-  async authanticate(input: AuthInput): Promise<AuthResult | null> {
-    const user = await this.validateUser(input);
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return this.signIn({
-      email: user?.email,
-      userId: user?.id,
-    });
-  }
-
-  async getUserById(input: { id: string }): Promise<User | null> {
-    const user = await this.userService.findUserById({ id: input.id });
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-    return user;
   }
 }

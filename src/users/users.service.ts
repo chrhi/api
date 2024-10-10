@@ -10,7 +10,6 @@ import { EmailService } from 'src/email/email.service';
 
 type TUser = {
   fname: string;
-
   password: string;
   phone: number;
   email: string;

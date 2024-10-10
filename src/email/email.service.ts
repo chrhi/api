@@ -6,7 +6,6 @@ export class EmailService {
   private resend: Resend;
 
   constructor() {
-    // Initialize the Resend instance with your API key
     this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
@@ -19,7 +18,7 @@ export class EmailService {
       `;
 
       const response = await this.resend.emails.send({
-        from: 'noreply@yourdomain.com',
+        from: 'noreply@jethings.com',
         to,
         subject,
         html,

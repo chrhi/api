@@ -6,12 +6,9 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // i think this one validates the user and append the request to add the user objct
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Request() req) {
-    console.log(req.user);
-
     return this.authService.login(req.user);
   }
 }

@@ -43,16 +43,8 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/profile')
-  async getUserProfile(@Req() req): Promise<User> {
-    try {
-      console.log('this is the userId from the attached request');
-      console.log(req?.user?.userId);
-      const userId = req?.user?.userId;
-      const user = await this.getUserProfile(userId);
-      return user;
-    } catch (err) {
-      console.error(err);
-      throw new InternalServerErrorException(err);
-    }
+  async getUserProfile(@Req() req) {
+    const user = await this.usersService.getUserProfile(req?.user.userId);
+    return user;
   }
 }

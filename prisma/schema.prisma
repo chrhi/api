@@ -12,7 +12,7 @@ model User {
   fname    String
   lname    String
   verified Boolean
-  phone    Int     @unique
+  phone    String     @unique
   email    String  @unique
   password String
   store    Store[]
@@ -28,7 +28,7 @@ enum CodeTypes {
 model VerificationCode {
    id       String  @unique @default(cuid())
    userId   String
-   code     String  
+   code     Int     @unique  
    isActive Boolean
    type     CodeTypes 
    user     User?     @relation(fields: [userId], references: [id])

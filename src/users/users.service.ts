@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
+import { generateRandomSixDigitNumber } from './utils';
 
 type TUser = {
   fname: string;
   password: string;
-  phone: number;
+  phone: string;
   email: string;
 };
 
@@ -21,40 +22,46 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async generateConfirmationCode(userId: string, userEmail: string) {
+  async generateVerificationCode(userId: string) {
+    const code = generateRandomSixDigitNumber();
+
+    const user = await this.prisma.user.findFirst({ where: { id: userId } });
     const verificationCode = await this.prisma.verificationCode.create({
       data: {
-        code: 'RAYAN_IS_ANGRY',
+        code: code,
         type: 'CONFIRM_EMAIL',
         userId,
         isActive: true,
       },
     });
 
-    this.resend.sendVerificationCode(userEmail, verificationCode.id);
+    this.resend.sendVerificationCode(user.email, verificationCode.id);
   }
 
-  async confirmeUserAccount(userId: string) {
-    const code = await this.prisma.verificationCode.findFirst({
+  async verifyEmail(code: number) {
+    const verification = await this.prisma.verificationCode.findFirst({
       where: {
-        userId,
+        code: code,
+        isActive: true,
+        type: 'CONFIRM_EMAIL',
       },
     });
 
-    if (!code.isActive) {
-      return 'user already activated';
+    if (!verification) {
+      throw new BadRequestException('Invalid or expired verification code');
     }
 
-    const user = this.prisma.user.update({
-      where: {
-        id: code.userId,
-      },
-      data: {
-        verified: true,
-      },
+    await this.prisma.user.update({
+      where: { id: verification.userId },
+      data: { verified: true },
     });
 
-    return user;
+    await this.prisma.verificationCode.update({
+      where: { id: verification.id },
+      data: { isActive: false },
+    });
+
+    return true;
   }
 
   async create(userData: TUser) {
@@ -64,13 +71,13 @@ export class UsersService {
         email: userData.email,
         fname: userData.fname,
         lname: 'later',
-        phone: Number(userData.phone),
+        phone: userData.phone,
         password: hashedPassword,
         verified: false,
       },
     });
 
-    await this.generateConfirmationCode(user.id, user.email);
+    await this.generateVerificationCode(user.id);
 
     return user;
   }

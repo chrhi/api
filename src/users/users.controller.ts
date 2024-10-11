@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '@prisma/client';
-// import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('users')
@@ -23,7 +22,7 @@ export class UsersController {
       email: string;
       password: string;
       fname: string;
-      phone: number;
+      phone: string;
     },
   ): Promise<User> {
     try {
@@ -46,5 +45,22 @@ export class UsersController {
   async getUserProfile(@Req() req) {
     const user = await this.usersService.getUserProfile(req?.user.userId);
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('verification-code')
+  async getVerificationCode(@Req() req) {
+    await this.usersService.generateVerificationCode(req?.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('verify-email')
+  async verifyUser(
+    @Body()
+    input: {
+      code: string;
+    },
+  ) {
+    await this.usersService.verifyEmail(Number(input.code));
   }
 }

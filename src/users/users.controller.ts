@@ -1,11 +1,16 @@
 import {
   Body,
   Controller,
+  Get,
   InternalServerErrorException,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '@prisma/client';
+// import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -29,6 +34,21 @@ export class UsersController {
         phone: input.phone,
       });
 
+      return user;
+    } catch (err) {
+      console.error(err);
+      throw new InternalServerErrorException(err);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/profile')
+  async getUserProfile(@Req() req): Promise<User> {
+    try {
+      console.log('this is the userId from the attached request');
+      console.log(req?.user?.userId);
+      const userId = req?.user?.userId;
+      const user = await this.getUserProfile(userId);
       return user;
     } catch (err) {
       console.error(err);

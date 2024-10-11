@@ -6,10 +6,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthGuard } from './guards/auth.guard';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [AuthService, JwtStrategy, LocalStrategy, JwtAuthGuard, AuthGuard],
   imports: [
     UsersModule,
     JwtModule.register({
@@ -19,7 +21,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     }),
     PassportModule,
   ],
-  exports: [AuthService],
+  exports: [AuthService, JwtAuthGuard, AuthGuard],
 })
 export class AuthModule {}
 
